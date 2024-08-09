@@ -10,6 +10,20 @@ const fetchRandomProfile = async () => {
   return response.json();
 };
 
+const saveSwipe = async (profileId) => {
+  const response = await fetch("http://localhost:8080/matches", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ profileId }),
+  });
+  if (!response.ok) {
+    throw new Error("Failed to save Swipe!");
+  }
+  return response.json();
+};
+
 const ProfileSelector = ({ profile, onSwipe }) =>
   profile ? (
     <div className="rounded-lg overflow-hidden bg-white shadow-lg">
@@ -27,13 +41,13 @@ const ProfileSelector = ({ profile, onSwipe }) =>
       <div className="flex p-4 justify-center space-x-4">
         <button
           className="bg-red-500 rounded-full p-4 hover:bg-red-700"
-          onClick={() => onSwipe("left")}
+          onClick={() => onSwipe("left", profile.id)}
         >
           <X size={24} />
         </button>
         <button
           className="bg-green-500 rounded-full p-4 hover:bg-green-700"
-          onClick={() => onSwipe("right")}
+          onClick={() => onSwipe("right", profile.id)}
         >
           <Heart size={24} />
         </button>
@@ -153,9 +167,11 @@ function App() {
   const [currentScreen, setCurrentScreen] = useState("profile");
   const [currentProfile, setCurrentProfile] = useState(null);
 
-  const onSwipe = (direction) => {
+  const onSwipe = (direction, profileId) => {
     if (direction === "right") {
       console.log("Liked!");
+      const res = saveSwipe(profileId);
+      console.table(res);
     }
     loadRandomProfile();
   };
