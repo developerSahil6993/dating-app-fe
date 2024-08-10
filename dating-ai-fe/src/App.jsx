@@ -43,6 +43,23 @@ const fetchConversations = async (conversationId) => {
   return response.json();
 };
 
+const sendMessages = async (conversationId, message) => {
+  const response = await fetch(
+    `http://localhost:8080/conversations/${conversationId}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ authorId: 1, messageText: message }),
+    }
+  );
+  if (!response.ok) {
+    throw new Error("Failed to submit message!");
+  }
+  return response.json();
+};
+
 const ProfileSelector = ({ profile, onSwipe }) =>
   profile ? (
     <div className="rounded-lg overflow-hidden bg-white shadow-lg">
@@ -120,13 +137,16 @@ const MatchesList = ({ matches, onSelectMatch }) => {
   );
 };
 
-const ChatScreen = ({ currentMatch, conversation }) => {
+const ChatScreen = ({ currentMatch, conversation, refreshState }) => {
   const [input, setInput] = useState("");
-  const handleSend = () => {
+  const handleSend = async (conversation, input) => {
     if (input.trim()) {
-      console.log(input);
+      console.log("11111111");
+      console.log(currentMatch, conversation, input);
+      await sendMessages(conversation.id, input);
       setInput("");
     }
+    refreshState();
   };
 
   return currentMatch ? (
@@ -137,7 +157,7 @@ const ChatScreen = ({ currentMatch, conversation }) => {
           Chat with {currentMatch.firstName} {currentMatch.lastName}
         </h2>
         <div className="h-[50vh] border rounded overflow-y-auto mb-4 p-2">
-          {conversation.map((message, index) => (
+          {conversation.messages.map((message, index) => (
             <div key={index}>
               <div className="mb-4 p-2 rounded bg-gray-100">
                 {message.messageText}
@@ -155,7 +175,7 @@ const ChatScreen = ({ currentMatch, conversation }) => {
           />
           <button
             className="bg-blue-500 text-white rounded p-2"
-            onClick={() => handleSend()}
+            onClick={() => handleSend(conversation, input)}
           >
             Send
           </button>
@@ -214,9 +234,19 @@ function App() {
     const conversation = await fetchConversations(conversationId);
     setCurrentMatchAndChat({
       match: profile,
-      conversation: conversation.messages,
+      conversation: conversation,
     });
     setCurrentScreen("chat");
+  };
+
+  const refreshChatState = async () => {
+    const conversation = await fetchConversations(
+      currentMatchAndChat.conversation.id
+    );
+    setCurrentMatchAndChat({
+      match: currentMatchAndChat.match,
+      conversation: conversation,
+    });
   };
 
   const renderScreen = () => {
@@ -231,6 +261,7 @@ function App() {
           <ChatScreen
             currentMatch={currentMatchAndChat.match}
             conversation={currentMatchAndChat.conversation}
+            refreshState={refreshChatState}
           />
         );
       default:
