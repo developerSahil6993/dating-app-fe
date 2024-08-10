@@ -51,7 +51,7 @@ const sendMessages = async (conversationId, message) => {
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ authorId: 1, messageText: message }),
+      body: JSON.stringify({ authorId: "user", messageText: message }),
     }
   );
   if (!response.ok) {
